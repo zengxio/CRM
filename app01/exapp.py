@@ -28,7 +28,7 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
             #
             # url=reverse(name,args=(obj.pk,))
             # # print(url)
-            param_dict = QueryDict(mutable=True)  # 设置为可修改
+            param_dict = QueryDict(mutable=True)  # 设置get url为可修改，默认为不可修改
             if self.request.GET:
                 param_dict['_changlistfilter'] = self.request.GET.urlencode()
             base_edit_url = reverse("{2}:{0}_{1}_change".format(self.app_label, self.model_name, self.site.namespace),
@@ -60,6 +60,7 @@ v1.site.register(models.Role,ExtraAppRole)
 
 # v1.site.register(models.UserInfo)
 # v1.site.register(models.Role)
+v1.site.register(models.UserGroup)
 
 """
 以上是完整示例

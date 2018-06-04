@@ -87,7 +87,7 @@ class BaseExtraAdmin(object):
         :return:
         """
         if request.method=="GET":
-            print(request.GET.get("_changlistfilter"))
+            # print(request.GET.get("_changlistfilter"))
             model_form_obj=self.get_add_or_edit_model_form()()
         else:
             model_form_obj = self.get_add_or_edit_model_form()(data=request.POST,files=request.FILES)
@@ -99,8 +99,11 @@ class BaseExtraAdmin(object):
                 list_url = "{0}?{1}".format(base_list_url, request.GET.get("_changlistfilter"))
                 return redirect(list_url)
 
-        context={
-            'form':model_form_obj
+
+
+
+        context = {
+            'form': model_form_obj
         }
         return render(request,'exapp/add.html',context)
 
@@ -175,7 +178,7 @@ class ExtraAppSite(object):
         self._registry[model_class]=xxx(model_class,self)
         """
         {
-            UserInfo类:BaseExtraAdmin(UserInfo类,ExtraAppSite对象) ExtraAppUserInfo对象,
+            UserInfo类:BaseExtraAdmin(UserInfo类,ExtraAppSite对象) ExtraAppUserInfo对象,都是同一个site实例
             Role类:BaseExtraAdmin(Role类,ExtraAppSite对象)
             XX类:BaseExtraAdmin(XX类,ExtraAppSite对象)
         }
@@ -206,5 +209,5 @@ class ExtraAppSite(object):
     def logout(self,request):
         return HttpResponse("logout")
 
-
+#单例模式
 site=ExtraAppSite()

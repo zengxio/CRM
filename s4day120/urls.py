@@ -27,5 +27,6 @@ urlpatterns = [
     #include 如果参数是模块路径，导入模块，找到urlpatterns对应的列表
     url(r'^exapp/', v1.site.urls),
     url(r'^test/', views.test),
-    url(r'^ttt/', views.ttt,name='tt')
+    url(r'^add_test/', views.add_test),
+    # url(r'^ttt/', views.ttt,name='tt')
 ]

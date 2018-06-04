@@ -7,8 +7,6 @@ register=Library()
 
 def table_body(result_list,list_display,BaseExtraAdmin_obj):
 
-
-
     #根据字段名获取数据
     for row in result_list:
         if list_display=="__all__":
@@ -37,3 +35,5 @@ def func(result_list,list_display,BaseExtraAdmin_obj):
     v=table_body(result_list,list_display,BaseExtraAdmin_obj)
     thead=table_head(result_list,list_display,BaseExtraAdmin_obj)
     return {'xxx':v,'table_head':thead}
+
+
