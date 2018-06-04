@@ -1,0 +1,24 @@
+自定制admin
+	1、创建app组件，extrapp
+	2、先将model类注册到_registry={}
+		- 通过 'extraapp.apps.ExtraappConfig',注册app
+		- 指定文件
+			class ExtraappConfig(AppConfig):
+				name = 'extraapp'
+
+				def ready(self):
+					super(ExtraappConfig,self).ready()
+					from django.utils.module_loading import autodiscover_modules
+					autodiscover_modules('exapp')	 #每个app都创建exapp.py文件。就会在启动程序的时候执行
+		- 加载文件时，注册model
+		前提注释以下相关的auth，messages，admin
+		# 'django.contrib.admin',
+        # 'django.contrib.auth',
+		# 'django.contrib.messages',
+
+	3、循环生成URL
+	request.GET.urlencode()#urlencode获取url
+
+	4、反向生成url时，注意加上namespace
+
+	5、查看列表
