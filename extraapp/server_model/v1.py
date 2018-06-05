@@ -4,6 +4,8 @@
 from django.shortcuts import HttpResponse,render,redirect
 from django.urls import reverse
 from django.http.request import QueryDict
+import copy
+
 class BaseExtraAdmin(object):
     list_display="__all__"
     add_or_edit_model_form=None
@@ -63,16 +65,26 @@ class BaseExtraAdmin(object):
 
 
         self.request=request
-        result_list=self.model_class.objects.all()
-        #前端要显示下面的内容，要扩展simple_tag
-        # print(result_list)
-        # print(self.list_display)
+        #分页开始
+        condition={}
+        from utils.my_page import PageInfo
+        all_count=self.model_class.objects.filter(**condition).count()
+        base_page_url = reverse("{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
+
+        page_param_dict=copy.deepcopy(request.GET)
+        page_param_dict._mutable=True
+        page_param_dict["page"]=1
+        page_obj=PageInfo(request.GET.get("page"),all_count,base_page_url,page_param_dict)
+        result_list=self.model_class.objects.filter(**condition)[page_obj.start:page_obj.end]
+
+        #分页结束
 
         context={
             'result_list':result_list,
             'list_display':self.list_display,
             'BaseExtraAdmin_obj':self,
-            'add_url':add_url
+            'add_url':add_url,
+            'page_str':page_obj.pager()
 
         }
         return render(request, 'exapp/change_list.html',
@@ -89,23 +101,31 @@ class BaseExtraAdmin(object):
         if request.method=="GET":
             # print(request.GET.get("_changlistfilter"))
             model_form_obj=self.get_add_or_edit_model_form()()
+            context = {
+                'form': model_form_obj
+            }
+            return render(request, 'exapp/add.html', context)
+
         else:
             model_form_obj = self.get_add_or_edit_model_form()(data=request.POST,files=request.FILES)
             if model_form_obj.is_valid():
-                model_form_obj.save()
-                #添加成功进行跳转
-                base_list_url = reverse(
-                    "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
-                list_url = "{0}?{1}".format(base_list_url, request.GET.get("_changlistfilter"))
-                return redirect(list_url)
+                obj=model_form_obj.save()
+                #如果是popup，关闭页面，并把数据返回给调用者，
+                popid=request.GET.get('popup')
+                if popid:
+                    return render(request, 'exapp/popup_response.html',{ 'data_dict':{'pk': obj.pk,'text': str(obj),'popid': popid}})
 
+                else:
+                    #否则添加成功进行跳转
+                    base_list_url = reverse(
+                        "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
+                    list_url = "{0}?{1}".format(base_list_url, request.GET.get("_changlistfilter"))
+                    return redirect(list_url)
 
-
-
-        context = {
-            'form': model_form_obj
-        }
-        return render(request,'exapp/add.html',context)
+            context = {
+                'form': model_form_obj
+            }
+            return render(request,'exapp/add.html',context)
 
 
     def delete_view(self,request,pk):

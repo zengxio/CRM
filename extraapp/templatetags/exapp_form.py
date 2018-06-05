@@ -21,7 +21,7 @@ def show_add_edit_form(form):
             target_model_name = item.field.queryset.model._meta.model_name  # 获取表名
             # self.site.namespace
             url_name = "{0}:{1}_{2}_add".format(v1.site.namespace, target_app_label, target_model_name)
-            target_url = reverse(url_name)
+            target_url = "{0}?popup={1}".format(reverse(url_name),item.auto_id)
             row['is_popup'] = True
             row['item'] = item
             row['popup_url'] = target_url

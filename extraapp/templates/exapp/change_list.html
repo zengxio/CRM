@@ -1,9 +1,12 @@
 {% load exapp_list %}
+{% load static %}  {#另外一个导入css的方式 STATIC_URL指定的是什么，static url就是什么#}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link rel="stylesheet" href="{% static 'exapp/plugins/bootstrap-3.3.7-dist/css/bootstrap.css' %}">
+
 </head>
 <body>
 <h1>数据列表</h1>
@@ -12,5 +15,10 @@
     {% func result_list list_display BaseExtraAdmin_obj %}
     {# 数据表格 结束#}
 
+    {#    分页开始#}
+    <ul class="pagination">
+        {{ page_str | safe }}
+    </ul>
+    {#    分页结束#}
 </body>
 </html>
