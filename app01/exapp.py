@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.http.request import QueryDict
 #userinfo表格显示
+
 class ExtraAppUserInfo(v1.BaseExtraAdmin):
     def func(self,obj=None,is_header=False):
         if is_header:
@@ -40,9 +41,8 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
             # return mark_safe("<input type='checkbox'>")
             return "选项"
         else:
-            tag="<input type='checkbox' value='{0}'>".format(obj.pk)
+            tag="<input name='pk' type='checkbox' value='{0}'>".format(obj.pk)
             return mark_safe(tag)
-
     #定制显示某列数据
     def comb(self,obj=None,is_header=False):
         if is_header:
@@ -50,7 +50,28 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
         else:
             return "%s-%s"%(obj.username,obj.email)
 
+    def initial(self,request):
+        """返回值为True，返回当前页，False返回首页"""
+        pk_list=request.POST.getlist('pk')
+
+        print(pk_list)
+        #self.model_class就可以操作数据库
+        return True
+    initial.text="初始化"
+
+    def multi_del(self,request):
+        pass
+
+    multi_del.text = "批量删除"
     list_display=[checkbox,'id','username','email',comb,func]
+
+    action_list = [initial,multi_del]
+    from app01.filter_code import FilterOption
+    filter_list=[
+        FilterOption('username',False),
+        FilterOption('ug',False),
+        FilterOption('m2m',False)
+    ]
 v1.site.register(models.UserInfo,ExtraAppUserInfo)
 
 #role表格显示

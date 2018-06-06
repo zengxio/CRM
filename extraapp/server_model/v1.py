@@ -8,6 +8,8 @@ import copy
 
 class BaseExtraAdmin(object):
     list_display="__all__"
+    action_list=[]
+    filter_list=[]
     add_or_edit_model_form=None
 
     def __init__(self,model_class,site):
@@ -71,20 +73,59 @@ class BaseExtraAdmin(object):
         all_count=self.model_class.objects.filter(**condition).count()
         base_page_url = reverse("{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
 
-        page_param_dict=copy.deepcopy(request.GET)
+        page_param_dict=copy.deepcopy(request.GET) #全新的复制一份
         page_param_dict._mutable=True
         page_param_dict["page"]=1
         page_obj=PageInfo(request.GET.get("page"),all_count,base_page_url,page_param_dict)
         result_list=self.model_class.objects.filter(**condition)[page_obj.start:page_obj.end]
 
-        #分页结束
+       ################ Action操作 ################
+        #get请求，显示下拉框
+        action_list=[]
+        for item in self.action_list:
+            tpl={'name':item.__name__,'text':item.text}
+            action_list.append(tpl)
+        if request.method=="POST":
+            """1、获取action"""
+            func_name_str=request.POST.get('action')
+            ret=getattr(self,func_name_str)(request)
+            action_page_url = reverse(
+                "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
+
+            if ret:
+                action_page_url="{0}?{1}".format(action_page_url,request.GET.urlencode())
+            return redirect(action_page_url)
+        ######组合搜索操作#######
+        filter_list=[]
+
+        for option in self.filter_list:
+            if option.is_func:
+                data_list=option.field_or_func(self,request)
+            else:
+                #username ug m2m
+                from django.db.models import ForeignKey,ManyToManyField
+                field=self.model_class._meta.get_field(option.field_or_func)
+                if isinstance(field,ForeignKey):
+                    # print(field.rel.model) #封装了外键表对象
+                    data_list=field.rel.model.objects.all()
+                elif isinstance(field,ManyToManyField):
+                    # print(field.rel.model)
+                    data_list = field.rel.model.objects.all()
+                else:
+                    # self.model_class or field.model 都可以拿到userinfo
+                    # print(self.model_class,field.model)
+                    data_list = field.model.objects.all()
+
+            filter_list.append(data_list)
 
         context={
             'result_list':result_list,
             'list_display':self.list_display,
             'BaseExtraAdmin_obj':self,
             'add_url':add_url,
-            'page_str':page_obj.pager()
+            'page_str':page_obj.pager(),
+            'action_list':action_list,
+            'filter_list':filter_list
 
         }
         return render(request, 'exapp/change_list.html',
