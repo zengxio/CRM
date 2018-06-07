@@ -181,10 +181,18 @@ class BaseExtraAdmin(object):
         根据pk获取数据，然后delete()
         获取url，跳转回列表页面
         """
+        self.model_class.objects.filter(pk=pk).delete()
+        _changlistfilter=request.GET.get('_changlistfilter')
+        redirect_url = reverse('%s:%s_%s_changelist' % (self.site.namespace, self.app_label, self.model_name))
+        if _changlistfilter:
+            change_list_url="{0}?{1}".format(redirect_url,_changlistfilter)
+        else:
+            change_list_url= redirect_url
+        return redirect(change_list_url)
 
-        info = self.model_class._meta.app_label, self.model_class._meta.model_name
-        data = "%s_%s_delete" % info
-        return HttpResponse(data)
+        # info = self.model_class._meta.app_label, self.model_class._meta.model_name
+        # data = "%s_%s_delete" % info
+        # return HttpResponse(data)
 
     def change_view(self,request,pk):
         """

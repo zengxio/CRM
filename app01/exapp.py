@@ -37,8 +37,10 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
                 param_dict['_changlistfilter'] = self.request.GET.urlencode()
             base_edit_url = reverse("{2}:{0}_{1}_change".format(self.app_label, self.model_name, self.site.namespace),
                                     args=(obj.pk,))
+            base_del_url=reverse("{2}:{0}_{1}_delete".format(self.app_label, self.model_name, self.site.namespace),
+                                    args=(obj.pk,))
             edit_url = "{0}?{1}".format(base_edit_url, param_dict.urlencode())
-            return mark_safe("<a href='{0}'>编辑</a>".format(edit_url))
+            return mark_safe("<a href='{0}'>编辑</a>  <a href='{1}'>删除</a>".format(edit_url,base_del_url))
     def checkbox(self,obj=None,is_header=False):
         if is_header:
             # return mark_safe("<input type='checkbox'>")
@@ -57,7 +59,7 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
         """返回值为True，返回当前页，False返回首页"""
         pk_list=request.POST.getlist('pk')
 
-        print(pk_list)
+        # print(pk_list)
         #self.model_class就可以操作数据库
         return True
     initial.text="初始化"
@@ -68,6 +70,7 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
     multi_del.text = "批量删除"
     list_display=[checkbox,'id','username','email',comb,func]
 
+    #action
     action_list = [initial,multi_del]
     from extraapp.utils.filter_code import FilterOption
 
