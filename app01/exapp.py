@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 #encoding:utf-8
-from extraapp.server_model import v1
-from app01 import models
-from django.utils.safestring import mark_safe
-from django.urls import reverse
 from django.http.request import QueryDict
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+
+from app01 import models
+from extraapp.server_model import v1
+
+
 #userinfo表格显示
 
 class ExtraAppUserInfo(v1.BaseExtraAdmin):
@@ -66,10 +69,19 @@ class ExtraAppUserInfo(v1.BaseExtraAdmin):
     list_display=[checkbox,'id','username','email',comb,func]
 
     action_list = [initial,multi_del]
-    from app01.filter_code import FilterOption
+    from extraapp.utils.filter_code import FilterOption
+
+    #自定义显示函数
+    def email(self,option,request):
+        from extraapp.utils.filter_code import FilterList
+        queryset=models.UserInfo.objects.filter(id__gt=2)
+        return FilterList(option,queryset,request)
+
     filter_list=[
-        FilterOption('username',False),
-        FilterOption('ug',False),
+        FilterOption('username',False,text_func_name="text_username",val_func_name="value_username"),
+        FilterOption('email',False,text_func_name="text_email",val_func_name="value_email"),
+        # FilterOption(email,False,text_func_name="text_email",val_func_name="value_email"),
+        FilterOption('ug',True),
         FilterOption('m2m',False)
     ]
 v1.site.register(models.UserInfo,ExtraAppUserInfo)

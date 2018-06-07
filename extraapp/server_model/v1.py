@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 #encoding:utf-8
 
-from django.shortcuts import HttpResponse,render,redirect
-from django.urls import reverse
-from django.http.request import QueryDict
 import copy
+
+from django.http.request import QueryDict
+from django.shortcuts import HttpResponse, render, redirect
+from django.urls import reverse
+
 
 class BaseExtraAdmin(object):
     list_display="__all__"
@@ -36,7 +38,7 @@ class BaseExtraAdmin(object):
 
     @property
     def urls(self):
-        from django.conf.urls import url, include
+        from django.conf.urls import url
         info=self.model_class._meta.app_label,self.model_class._meta.model_name
         urlpatterns = [
             url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
@@ -69,7 +71,7 @@ class BaseExtraAdmin(object):
         self.request=request
         #分页开始
         condition={}
-        from utils.my_page import PageInfo
+        from extraapp.utils.my_page import PageInfo
         all_count=self.model_class.objects.filter(**condition).count()
         base_page_url = reverse("{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
 
@@ -96,26 +98,25 @@ class BaseExtraAdmin(object):
                 action_page_url="{0}?{1}".format(action_page_url,request.GET.urlencode())
             return redirect(action_page_url)
         ######组合搜索操作#######
+        from extraapp.utils.filter_code import FilterList
         filter_list=[]
-
         for option in self.filter_list:
             if option.is_func:
-                data_list=option.field_or_func(self,request)
+                data_list=option.field_or_func(self,option,request)
             else:
                 #username ug m2m
                 from django.db.models import ForeignKey,ManyToManyField
                 field=self.model_class._meta.get_field(option.field_or_func)
+                # print(request.GET)
                 if isinstance(field,ForeignKey):
                     # print(field.rel.model) #封装了外键表对象
-                    data_list=field.rel.model.objects.all()
+                    data_list=FilterList(option,field.rel.model.objects.all(),request)
                 elif isinstance(field,ManyToManyField):
-                    # print(field.rel.model)
-                    data_list = field.rel.model.objects.all()
+                    data_list = FilterList(option,field.rel.model.objects.all(), request)
                 else:
                     # self.model_class or field.model 都可以拿到userinfo
-                    # print(self.model_class,field.model)
-                    data_list = field.model.objects.all()
-
+                    data_list = FilterList(option,field.model.objects.all(), request)
+            # yield data_list
             filter_list.append(data_list)
 
         context={

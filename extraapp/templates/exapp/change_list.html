@@ -6,18 +6,36 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="{% static 'exapp/plugins/bootstrap-3.3.7-dist/css/bootstrap.css' %}">
+    <style>
+        .comb-search a{
+            display: inline-block;
+            border: 1px solid #dddddd;
+            padding:5px 8px;
+            margin: 5px;
+        }
+        .comb-search a.active{
+            background-color: #2aabd2;
+            color: white;
+        }
+        .comb-search .all-area{
+            float: left;
+        }
 
+        .comb-search .other-area{
+            padding-left: 70px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>数据列表</h1>
         {% if filter_list %}
-            <div class="row">
+            <div class="row comb-search">
                 <h3>组合搜索</h3>
                {% for queryset in filter_list %}
                    <div class="row">
                     {% for row in queryset %}
-                        <a href="">{{ row }}</a>
+                        {{ row }}
                         {% endfor %}
                    </div>
                {% endfor %}
