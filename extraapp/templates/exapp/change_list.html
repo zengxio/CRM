@@ -1,11 +1,7 @@
+{% extends 'exapp/layout.html' %}
 {% load exapp_list %}
 {% load static %}  {#另外一个导入css的方式 STATIC_URL指定的是什么，static url就是什么#}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <link rel="stylesheet" href="{% static 'exapp/plugins/bootstrap-3.3.7-dist/css/bootstrap.css' %}">
+{% block css %}
     <style>
         .comb-search a{
             display: inline-block;
@@ -25,13 +21,14 @@
             padding-left: 70px;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+{% block content %}
+    <h1>数据列表</h1>
     <div class="container">
-        <h1>数据列表</h1>
+
         {% if filter_list %}
             <div class="row comb-search">
-                <h3>组合搜索</h3>
+
                {% for queryset in filter_list %}
                    <div class="row">
                     {% for row in queryset %}
@@ -67,5 +64,4 @@
         </ul>
         {#    分页结束#}
     </div>
-</body>
-</html>
+{% endblock %}

@@ -6,13 +6,14 @@ import copy
 from django.http.request import QueryDict
 from django.shortcuts import HttpResponse, render, redirect
 from django.urls import reverse
-
+from django.template.response import TemplateResponse, SimpleTemplateResponse
 
 class BaseExtraAdmin(object):
     list_display="__all__"
     action_list=[]
     filter_list=[]
     add_or_edit_model_form=None
+    change_form_template = []
 
     def __init__(self,model_class,site):
         self.model_class=model_class
@@ -20,6 +21,7 @@ class BaseExtraAdmin(object):
         self.request=None
         self.app_label=model_class._meta.app_label
         self.model_name=model_class._meta.model_name
+
 
     def get_add_or_edit_model_form(self):
         if self.add_or_edit_model_form:
@@ -36,6 +38,16 @@ class BaseExtraAdmin(object):
             MyModelForm=type('MyModelForm',(ModelForm,),{'Meta':_m})
             return MyModelForm
 
+
+    def get_model_field_name_list(self):
+        """
+        获取当前model中定义的字段
+        :return:
+        """
+        # print(type(self.model_class._meta))
+        from django.db.models.options import Options
+        return [item.name for item in self.model_class._meta.fields]
+
     @property
     def urls(self):
         from django.conf.urls import url
@@ -45,7 +57,7 @@ class BaseExtraAdmin(object):
             url(r'^add/$', self.add_view, name='%s_%s_add' % info),
             url(r'^(.+)/delete/$', self.delete_view, name='%s_%s_delete' % info),
             url(r'^(.+)/change/$', self.change_view, name='%s_%s_change' % info),
-            # url(r'^(.+)/detail/$', self.detail_view, name='%s_%s_detail' % info),
+            url(r'^(.+)/detail/$', self.detail_view, name='%s_%s_detail' % info),
             # For backwards compatibility (was the change url before 1.9)
             # url(r'^(.+)/$', RedirectView.as_view(pattern_name='%s:%s_%s_change' % ((self.backend_site.name,) + info))),
         ]
@@ -238,6 +250,32 @@ class BaseExtraAdmin(object):
     #     return HttpResponse(data)
 
 
+    def detail_view(self, request, pk):
+        """
+        查看详细
+        :param request:
+        :param pk:
+        :return:
+        """
+        row = self.model_class.objects.filter(pk=pk).first()
+        fields = self.get_add_or_edit_model_form().Meta.fields
+        if fields == '__all__':
+            fields = self.get_model_field_name_list()
+            # print(self.get_model_field_name_list_m2m())
+        for name in fields:
+            val = getattr(row, name)
+            # print(name, val)
+
+        context = {
+            'row': row
+        }
+        return TemplateResponse(request, self.change_form_template or [
+            'exapp/%s/%s/detail.html' % (self.app_label, self.model_name),
+            'exapp/%s/detail.html' % self.app_label,
+            'exapp/detail.html'
+        ], context)
+
+
 class ExtraAppSite(object):
     def __init__(self):
         self._registry={}
@@ -247,6 +285,7 @@ class ExtraAppSite(object):
     def register(self,model_class,xxx=BaseExtraAdmin):
         self._registry[model_class]=xxx(model_class,self)
         """
+        app01下面是UserInfo
         {
             UserInfo类:BaseExtraAdmin(UserInfo类,ExtraAppSite对象) ExtraAppUserInfo对象,都是同一个site实例
             Role类:BaseExtraAdmin(Role类,ExtraAppSite对象)
@@ -257,6 +296,7 @@ class ExtraAppSite(object):
     def get_urls(self):
         from django.conf.urls import url, include
         ret=[
+            url(r'^$', self.index, name='index'),
             url(r'^login/',self.login,name='login'),
             url(r'^logout/',self.logout,name='logout')
         ]
@@ -273,11 +313,44 @@ class ExtraAppSite(object):
     def urls(self):
         return (self.get_urls(),self.app_name,self.namespace)
 
-    def login(self,request):
-        return HttpResponse("login")
 
-    def logout(self,request):
-        return HttpResponse("logout")
+    def login(self, request):
+        """
+        用户登录
+        :param request:
+        :return:
+        """
+
+        if request.method == 'GET':
+            return render(request, 'login.html')
+        else:
+            from extraapp import models
+            from extraapp.server_model import rbac
+
+            user = request.POST.get('username')
+            pwd = request.POST.get('password')
+            obj = models.User.objects.filter(username=user, password=pwd).first()
+            if obj:
+                rbac.initial_permission(request, obj)
+                return redirect('/exapp/')
+            else:
+                return render(request, 'login.html')
+
+    def logout(self, request):
+        """
+        用户注销
+        :param request:
+        :return:
+        """
+        pass
+
+    def index(self, request):
+        """
+        首页
+        :param request:
+        :return:
+        """
+        return render(request, 'exapp/index.html')
 
 #单例模式
 site=ExtraAppSite()
