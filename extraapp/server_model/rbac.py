@@ -30,6 +30,7 @@ def initial_permission(request, user):
     # 3. 权限写入session
     request.session[settings.RBAC_PERMISSION_URL_SESSION_KEY] = permission_url_list
 
+
     # 4. 菜单写入session
     menu_list = list(models.Menu.objects.values('id', 'caption', 'parent_id'))
     request.session[settings.RBAC_MENU_PERMISSION_SESSION_KEY] = {

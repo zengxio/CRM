@@ -15,6 +15,7 @@ def show_add_edit_form(form):
         row = {'is_popup': False, 'item': None, 'popup_url': None}
         # print(item.field.label,item.name)
         # isinstance(item.field,ModelMultipleChoiceField)  #
+
         if isinstance(item.field,
                       ModelChoiceField) and item.field.queryset.model in v1.site._registry:  # 同时都属于父类，所以fk，m2m都是true
             target_app_label = item.field.queryset.model._meta.app_label  # item.field.queryset.model 是models.表名的对象
@@ -25,6 +26,7 @@ def show_add_edit_form(form):
             row['is_popup'] = True
             row['item'] = item
             row['popup_url'] = target_url
+
         else:
             row['item'] = item
         from_list.append(row)

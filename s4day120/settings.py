@@ -53,7 +53,7 @@ MIDDLEWARE = [
     # 'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'extraapp.middleware.rbac.RbacMiddleware'
+    'extraapp.middleware.rbac.RbacMiddleware'
 ]
 
 ROOT_URLCONF = 's4day120.urls'
@@ -135,7 +135,7 @@ RBAC_MATCH_PARTTERN = "^{0}$"
 
 # 无需权限控制的URL
 RBAC_NO_AUTH_URL = [
-    '/arya/login',
+    '/exapp/login',
 ]
 
 # 无权访问时，页面提示信息

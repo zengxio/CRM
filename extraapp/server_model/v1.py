@@ -48,6 +48,24 @@ class BaseExtraAdmin(object):
         from django.db.models.options import Options
         return [item.name for item in self.model_class._meta.fields]
 
+    def another_urls(self):
+        """
+        钩子函数，用于自定义额外的url
+        :return:
+        """
+        return []
+
+    def changelist_param_url(self, query_params=None):
+        # redirect_url = "%s?%s" % (reverse('%s:%s_%s' % (self.site.namespace, self.app_label, self.model_name)),
+        #                           urllib.parse.urlencode(self.change_list_condition))
+        if query_params:
+            redirect_url = "%s?%s" % (
+                reverse('%s:%s_%s_changelist' % (self.site.namespace, self.app_label, self.model_name)),
+                query_params.urlencode())
+        else:
+            redirect_url=reverse('%s:%s_%s_changelist' % (self.site.namespace, self.app_label, self.model_name))
+        return redirect_url
+
     @property
     def urls(self):
         from django.conf.urls import url
@@ -61,6 +79,7 @@ class BaseExtraAdmin(object):
             # For backwards compatibility (was the change url before 1.9)
             # url(r'^(.+)/$', RedirectView.as_view(pattern_name='%s:%s_%s_change' % ((self.backend_site.name,) + info))),
         ]
+        urlpatterns+=self.another_urls()
         return urlpatterns
 
     def changelist_view(self,request):
@@ -85,8 +104,7 @@ class BaseExtraAdmin(object):
         condition={}
         from extraapp.utils.my_page import PageInfo
         all_count=self.model_class.objects.filter(**condition).count()
-        base_page_url = reverse("{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
-
+        base_page_url=self.changelist_param_url()
         page_param_dict=copy.deepcopy(request.GET) #全新的复制一份
         page_param_dict._mutable=True
         page_param_dict["page"]=1
@@ -103,11 +121,10 @@ class BaseExtraAdmin(object):
             """1、获取action"""
             func_name_str=request.POST.get('action')
             ret=getattr(self,func_name_str)(request)
-            action_page_url = reverse(
-                "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
 
+            action_page_url=self.changelist_param_url()
             if ret:
-                action_page_url="{0}?{1}".format(action_page_url,request.GET.urlencode())
+                action_page_url=self.changelist_param_url(request.GET)
             return redirect(action_page_url)
         ######组合搜索操作#######
         from extraapp.utils.filter_code import FilterList
@@ -171,8 +188,9 @@ class BaseExtraAdmin(object):
 
                 else:
                     #否则添加成功进行跳转
-                    base_list_url = reverse(
-                        "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
+                    # base_list_url = reverse(
+                    #     "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
+                    base_list_url=self.changelist_param_url()
                     list_url = "{0}?{1}".format(base_list_url, request.GET.get("_changlistfilter"))
                     return redirect(list_url)
 
@@ -195,16 +213,14 @@ class BaseExtraAdmin(object):
         """
         self.model_class.objects.filter(pk=pk).delete()
         _changlistfilter=request.GET.get('_changlistfilter')
-        redirect_url = reverse('%s:%s_%s_changelist' % (self.site.namespace, self.app_label, self.model_name))
+        # redirect_url = reverse('%s:%s_%s_changelist' % (self.site.namespace, self.app_label, self.model_name))
+        redirect_url = self.changelist_param_url()
         if _changlistfilter:
-            change_list_url="{0}?{1}".format(redirect_url,_changlistfilter)
+            change_list_url="%s?%s"%(redirect_url,_changlistfilter)
         else:
             change_list_url= redirect_url
         return redirect(change_list_url)
 
-        # info = self.model_class._meta.app_label, self.model_class._meta.model_name
-        # data = "%s_%s_delete" % info
-        # return HttpResponse(data)
 
     def change_view(self,request,pk):
         """
@@ -225,9 +241,12 @@ class BaseExtraAdmin(object):
             model_form_obj = self.get_add_or_edit_model_form()(data=request.POST,files=request.FILES,instance=obj) #成功
             if model_form_obj.is_valid():
                 model_form_obj.save()
-            base_list_url = reverse(
-                "{2}:{0}_{1}_changelist".format(self.app_label, self.model_name, self.site.namespace))
-            list_url = "{0}?{1}".format(base_list_url, request.GET.get("_changlistfilter"))
+            base_list_url=self.changelist_param_url()
+            request_parameters=request.GET.get("_changlistfilter")
+            if request_parameters:
+                list_url = "%s?%s"%(base_list_url,request_parameters)
+            else:
+                list_url=base_list_url
             return redirect(list_url)
         # 3、返回页面
         context={
@@ -235,19 +254,6 @@ class BaseExtraAdmin(object):
         }
 
         return render(request,'exapp/edit.html',context)
-
-
-
-
-    # def detail_view(self,request):
-    #     """
-    #     详情
-    #     :param request:
-    #     :return:
-    #     """
-    #     info = self.model_class._meta.app_label, self.model_class._meta.model_name
-    #     data = "%s_%s_detail" % info
-    #     return HttpResponse(data)
 
 
     def detail_view(self, request, pk):
@@ -269,6 +275,7 @@ class BaseExtraAdmin(object):
         context = {
             'row': row
         }
+        #页面优先级
         return TemplateResponse(request, self.change_form_template or [
             'exapp/%s/%s/detail.html' % (self.app_label, self.model_name),
             'exapp/%s/detail.html' % self.app_label,
@@ -331,6 +338,7 @@ class ExtraAppSite(object):
             pwd = request.POST.get('password')
             obj = models.User.objects.filter(username=user, password=pwd).first()
             if obj:
+                request.session['user_info']={'nid':obj.pk,'username':obj.username}
                 rbac.initial_permission(request, obj)
                 return redirect('/exapp/')
             else:
