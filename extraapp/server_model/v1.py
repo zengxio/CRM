@@ -221,7 +221,6 @@ class BaseExtraAdmin(object):
             change_list_url= redirect_url
         return redirect(change_list_url)
 
-
     def change_view(self,request,pk):
         """
         修改数据
@@ -236,7 +235,7 @@ class BaseExtraAdmin(object):
         if not obj:
             return HttpResponse("id不存在")
         if request.method=="GET":
-            model_form_obj=self.get_add_or_edit_model_form()(instance=obj)
+            model_form_obj=self.get_add_or_edit_model_form()(instance=obj) #instance会更新
         else:
             model_form_obj = self.get_add_or_edit_model_form()(data=request.POST,files=request.FILES,instance=obj) #成功
             if model_form_obj.is_valid():
@@ -254,7 +253,6 @@ class BaseExtraAdmin(object):
         }
 
         return render(request,'exapp/edit.html',context)
-
 
     def detail_view(self, request, pk):
         """
@@ -281,6 +279,7 @@ class BaseExtraAdmin(object):
             'exapp/%s/detail.html' % self.app_label,
             'exapp/detail.html'
         ], context)
+
 
 
 class ExtraAppSite(object):

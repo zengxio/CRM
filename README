@@ -1,4 +1,4 @@
-自定制admin
+自定制admin 增删改查、钩子自定制函数，页面组件引用
 	1、创建app组件，extrapp
 	2、先将model类注册到_registry={}
 		- 通过 'extraapp.apps.ExtraappConfig',注册app
@@ -68,6 +68,5 @@
                     return render(request,'exapp/permission_show.html')
             v1.site.register(models.Permission,PermissionAdmin)
 
-   9、增删改查、钩子自定制函数，页面修改
-
-   10、嵌入组件，rbac
+    9、action、组合搜索
+    10、嵌入组件，rbac
